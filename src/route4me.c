@@ -218,7 +218,6 @@ static int request(enum ReqType method, void *curl, const char *url, json_object
     free(chunk.memory);
 
     current_response.m_json_resp = json_tokener_parse(current_response.m_raw_resp);
-printf("JSON: %s UNJSON: %s\n", current_response.m_raw_resp, json_object_get_string(current_response.m_json_resp));
     if(!strcmp(current_response.m_raw_resp, json_object_get_string(current_response.m_json_resp)))
     {
         current_response.m_json_resp = NULL;
@@ -230,11 +229,25 @@ printf("JSON: %s UNJSON: %s\n", current_response.m_raw_resp, json_object_get_str
         //setCurrentResponse(ERR_JSON, szParseError, strlen(szParseError));
         return ERR_JSON;
     }
-    else
+    char error[100] = "";
+    int has_error = 0;
+    /* TODO: Fix and uncomment. Currently val contains garbage, but should be empty
+            if there are no errors */
+    /*json_object_object_foreach(current_response.m_json_resp, key, val)
+    {
+        if (!strcmp(key, "errors") && strlen(val) > 0)
+        {
+            strcpy(error, val);
+            has_error = 1;
+            break;
+        }
+    }*/
+    if (has_error)
     {
         current_response.m_err_code = ERR_API;
-        current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szAPIError) + 1);
+        current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szAPIError) + strlen(error) + 1);
         strcpy(current_response.m_err_msg, szAPIError);
+        strcat(current_response.m_err_msg, error);
         //setCurrentResponse(ERR_API, szAPIError, strlen(szAPIError));
         return ERR_API;
     }
