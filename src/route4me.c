@@ -52,7 +52,7 @@ struct http_resp
 
 static char szEmptyResponse[] = "empty http response";
 static char szParseError[] = "json parse error(s)\n";
-static char szAPIError[] = "route4me api errors\n";
+static char szAPIError[] = "route4me api errors:";
 
 static struct response_data current_response = {0};
 
@@ -231,19 +231,18 @@ static int request(enum ReqType method, void *curl, const char *url, json_object
     }
     char error[100] = "";
     int has_error = 0;
-    /* TODO: Fix and uncomment. Currently val contains garbage, but should be empty
-            if there are no errors */
-    /*json_object_object_foreach(current_response.m_json_resp, key, val)
+
+    json_object_object_foreach(current_response.m_json_resp, key, val)
     {
-        if (!strcmp(key, "errors") && strlen(val) > 0)
+        if (!strcmp(key, "errors"))
         {
-            strcpy(error, val);
+            strcpy(error, json_object_to_json_string(val));
             has_error = 1;
             break;
         }
-    }*/
+    }
     if (has_error)
-    {
+    {        
         current_response.m_err_code = ERR_API;
         current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szAPIError) + strlen(error) + 1);
         strcpy(current_response.m_err_msg, szAPIError);
