@@ -2,6 +2,7 @@
 #include <json.h>
 #include <curl/curl.h>
 #include "../include/route4me.h"
+#include <string.h>
 
 enum ReqType {
     REQ_GET,
@@ -61,12 +62,31 @@ struct response_data getCurrentResponse()
     return current_response;
 }
 
-//TODO: Fix segfault
-static void setCurrentResponse(int error_code, char* error_message, int error_strlen)
+static void setCurrentResponse(int error_code, const char* error_message, int error_strlen)
 {
     current_response.m_err_code = error_code;
-    current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(error_strlen) + 1);
+    current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(error_message) + 1);
     strcpy(current_response.m_err_msg, error_message);
+}
+
+int getErrorCode()
+{
+    return current_response.m_err_code;
+}
+
+char* getErrorMessage()
+{
+    return current_response.m_err_msg;
+}
+
+char* getRawResponse()
+{
+    return current_response.m_raw_resp;
+}
+
+json_object* getJSONResponse()
+{
+    return current_response.m_json_resp;
 }
 
 static void cleanCurrentResponse()
@@ -79,13 +99,16 @@ static void cleanCurrentResponse()
 }
 
 static char VEHICLES_SERVICE[] = "https://www.route4me.com/api/vehicles/view_vehicles.php";
-static char api_key[100];
+const char R4_API_HOST[] = "https://www.route4me.com/api.v4/optimization_problem.php";
+
+// TODO: Revise api key length
+static char m_key[100];
 static void* curl;
 static int verbose;
 
 void init(char* szKey, int nVerbose)
 {
-    strcpy(api_key, szKey);
+    strcpy(m_key, szKey);
     verbose = nVerbose;
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
@@ -99,9 +122,11 @@ void cleanUp()
     cleanCurrentResponse();
 }
 
-static void make_arg(void *curl, char *url, json_object* params)
+static void make_arg(char *url, json_object* params)
 {
         int first = 1;
+        char temp[2048] = "";
+        int i,j;
         json_object_object_foreach(params, key, val)
         {
             if (first) {
@@ -111,8 +136,16 @@ static void make_arg(void *curl, char *url, json_object* params)
             else
                 strcat(url, "&");
             strcat(url, key);
-            strcat(url,"=");
-            strcat(url, json_object_to_json_string(val));
+            strcat(url,"=");        
+
+            char* json = strdup(json_object_to_json_string(val));
+
+            if (json[0] == '"')
+            {
+                json[strlen(json) - 1] = '\0';
+                ++json;
+            }
+            strcat(url, json);
         }
 }
 
@@ -128,13 +161,13 @@ static size_t read_http_resp(void *contents, size_t size, size_t nmemb, void *us
     return realsize;
 }
 
-static int request(enum ReqType method, void *curl, const char *url, json_object *props, json_object* body)
+static int request(enum ReqType method, void *curl, char *url, json_object *props, json_object* body)
 {
     long http_code = 0L;
     struct http_resp chunk;
     chunk.memory = (char*) malloc(1);
     chunk.size = 0;
-    make_arg(curl, url, props);
+    make_arg(url, props);
     curl_easy_reset(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -172,6 +205,7 @@ static int request(enum ReqType method, void *curl, const char *url, json_object
             break;
     }
     CURLcode res = curl_easy_perform(curl);
+
     if(res != CURLE_OK)
     {
         free(chunk.memory);
@@ -194,22 +228,16 @@ static int request(enum ReqType method, void *curl, const char *url, json_object
             CURLcode res = curl_easy_perform(curl);
             if(res != CURLE_OK)
             {
-                free(chunk.memory);
-                current_response.m_err_code = ERR_CURL_RESP;
-                current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(curl_easy_strerror(res)));
-                strcpy(current_response.m_err_msg, curl_easy_strerror(res));
-                //setCurrentResponse(ERR_CURL_RESP, curl_easy_strerror(res), strlen(curl_easy_strerror(res)));
+                free(chunk.memory);               
+                setCurrentResponse(ERR_CURL_RESP, curl_easy_strerror(res), strlen(curl_easy_strerror(res)));
                 return ERR_CURL_RESP;
             }
         }
     }
     if(chunk.size == 0)
-    {
-        free(chunk.memory);
-        current_response.m_err_code = ERR_CURL_EMPTY;
-        current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szEmptyResponse));
-        strcpy(current_response.m_err_msg, szEmptyResponse);
-        //setCurrentResponse(ERR_CURL_EMPTY, szEmptyResponse, strlen(szEmptyResponse));
+    {        
+        free(chunk.memory);       
+        setCurrentResponse(ERR_CURL_EMPTY, szEmptyResponse, strlen(szEmptyResponse));
         return ERR_CURL_EMPTY;
     }
     current_response.m_raw_resp = realloc(current_response.m_raw_resp, chunk.size+1);
@@ -219,48 +247,41 @@ static int request(enum ReqType method, void *curl, const char *url, json_object
 
     current_response.m_json_resp = json_tokener_parse(current_response.m_raw_resp);
     if(!strcmp(current_response.m_raw_resp, json_object_get_string(current_response.m_json_resp)))
-    {
+    {        
         current_response.m_json_resp = NULL;
 
-        //TODO: Extract error details from JSON-C
-        current_response.m_err_code = ERR_JSON;
-        current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szParseError)+1);
-        strcpy(current_response.m_err_msg, szParseError);
-        //setCurrentResponse(ERR_JSON, szParseError, strlen(szParseError));
+        //TODO: Extract error details from JSON-C       
+        setCurrentResponse(ERR_JSON, szParseError, strlen(szParseError));
         return ERR_JSON;
-    }
-    char error[100] = "";
-    int has_error = 0;
-
-    json_object_object_foreach(current_response.m_json_resp, key, val)
-    {
-        if (!strcmp(key, "errors"))
-        {
-            strcpy(error, json_object_to_json_string(val));
-            has_error = 1;
-            break;
-        }
-    }
-    if (has_error)
-    {        
-        current_response.m_err_code = ERR_API;
-        current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(szAPIError) + strlen(error) + 1);
-        strcpy(current_response.m_err_msg, szAPIError);
-        strcat(current_response.m_err_msg, error);
-        //setCurrentResponse(ERR_API, szAPIError, strlen(szAPIError));
-        return ERR_API;
     }
     return CURLE_OK;
 }
 
+/* ROUTES */
+int get_route_q(int offset, int limit)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "offset", json_object_new_int(offset));
+    json_object_object_add(props, "limit", json_object_new_int(limit));
+
+    strcpy(url, R4_API_HOST);
+    request(REQ_GET, curl, url, props, NULL);
+
+    return 0;
+}
+
+/* VEHICLES */
 int get_vehicles(int offset, int limit)
 {
     /*TODO: According to RFC-2616 length of URI is not limited.
             This number should be revised.
      */
-    char url[2048];
-    json_object* props = json_object_new_object();
-    json_object_object_add(props, "api_key", json_object_new_string(api_key));
+    static char url[2048];
+    json_object* props = json_object_new_object();  
+
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
     json_object_object_add(props, "offset", json_object_new_int(offset));
     json_object_object_add(props, "limit", json_object_new_int(limit));
 

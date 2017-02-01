@@ -6,7 +6,7 @@ static char key[] = "11111111111111111111111111111111";
 
 int main(int argc, char* argv[])
 {
-    init(key, 1);
+    init(key, 0);
 
     get_vehicles(5,10);
 
