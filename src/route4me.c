@@ -98,8 +98,9 @@ static void cleanCurrentResponse()
     memset(&current_response, 0, sizeof(struct response_data));
 }
 
-static char VEHICLES_SERVICE[] = "https://www.route4me.com/api/vehicles/view_vehicles.php";
-const char R4_API_HOST[] = "https://www.route4me.com/api.v4/optimization_problem.php";
+static const char VEHICLES_SERVICE[] = "https://www.route4me.com/api/vehicles/view_vehicles.php";
+static const char R4_API_HOST[] = "https://www.route4me.com/api.v4/optimization_problem.php";
+static const char ROUTE_HOST[] = "https://www.route4me.com/api.v4/route.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -167,7 +168,7 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
     struct http_resp chunk;
     chunk.memory = (char*) malloc(1);
     chunk.size = 0;
-    make_arg(url, props);
+    make_arg(url, props);    
     curl_easy_reset(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -205,7 +206,6 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
             break;
     }
     CURLcode res = curl_easy_perform(curl);
-
     if(res != CURLE_OK)
     {
         free(chunk.memory);
@@ -244,13 +244,10 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
     strcpy(current_response.m_raw_resp, chunk.memory);
     current_response.m_raw_resp[chunk.size] = '\0';
     free(chunk.memory);
-
     current_response.m_json_resp = json_tokener_parse(current_response.m_raw_resp);
-    if(!strcmp(current_response.m_raw_resp, json_object_get_string(current_response.m_json_resp)))
-    {        
-        current_response.m_json_resp = NULL;
-
-        //TODO: Extract error details from JSON-C       
+    if (json_object_is_type(current_response.m_json_resp, json_type_null) ||
+        !strcmp(current_response.m_raw_resp, json_object_get_string(current_response.m_json_resp)))
+    {
         setCurrentResponse(ERR_JSON, szParseError, strlen(szParseError));
         return ERR_JSON;
     }
@@ -267,9 +264,63 @@ int get_route_q(int offset, int limit)
     json_object_object_add(props, "limit", json_object_new_int(limit));
 
     strcpy(url, R4_API_HOST);
-    request(REQ_GET, curl, url, props, NULL);
+    return request(REQ_GET, curl, url, props, NULL);
+}
 
-    return 0;
+int get_multiple_routes()
+{
+    char url[2048];
+    int limit = 10, offset = 0;
+
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "limit", json_object_new_int(limit));
+    json_object_object_add(props, "offset", json_object_new_int(offset));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_route_by_id(const char *route_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_route_path_points(const char *route_id, const char *route_path_output)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "route_path_output", json_object_new_string(route_path_output));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_route_directions(const char *route_id, int directions)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "directions", json_object_new_int(directions));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_route_query(const char *route_id, const char *query)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "query", json_object_new_string(query));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
 }
 
 /* VEHICLES */
