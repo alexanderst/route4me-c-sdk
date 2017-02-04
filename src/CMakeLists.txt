@@ -1,6 +1,7 @@
 
 SET(CROUTE4ME_SOURCE
   route4me.c
+  json_deserialize.c
   ${JSON_C_DIR}/json.h
 )
 

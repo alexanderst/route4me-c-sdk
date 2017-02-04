@@ -101,11 +101,14 @@ static void cleanCurrentResponse()
 static const char VEHICLES_SERVICE[] = "https://www.route4me.com/api/vehicles/view_vehicles.php";
 static const char R4_API_HOST[] = "https://www.route4me.com/api.v4/optimization_problem.php";
 static const char ROUTE_HOST[] = "https://www.route4me.com/api.v4/route.php";
+static const char DUPLICATE_ROUTE[] = "https://www.route4me.com/actions/duplicate_route.php";
+static const char SHARE_HOST[] = "https://www.route4me.com/actions/route/share_route.php";
 
 // TODO: Revise api key length
 static char m_key[100];
 static void* curl;
 static int verbose;
+static struct curl_httppost *formpost;
 
 void init(char* szKey, int nVerbose)
 {
@@ -119,6 +122,8 @@ void cleanUp()
 {
     if (curl)
         curl_easy_cleanup(curl);
+    if (formpost)
+        curl_formfree(formpost);
     curl_global_cleanup();
     cleanCurrentResponse();
 }
@@ -126,8 +131,7 @@ void cleanUp()
 static void make_arg(char *url, json_object* params)
 {
         int first = 1;
-        char temp[2048] = "";
-        int i,j;
+
         json_object_object_foreach(params, key, val)
         {
             if (first) {
@@ -137,7 +141,7 @@ static void make_arg(char *url, json_object* params)
             else
                 strcat(url, "&");
             strcat(url, key);
-            strcat(url,"=");        
+            strcat(url,"=");
 
             char* json = strdup(json_object_to_json_string(val));
 
@@ -162,13 +166,13 @@ static size_t read_http_resp(void *contents, size_t size, size_t nmemb, void *us
     return realsize;
 }
 
-static int request(enum ReqType method, void *curl, char *url, json_object *props, json_object* body)
+static int request(enum ReqType method, void *curl, char *url, json_object *props, char* payload)
 {
     long http_code = 0L;
     struct http_resp chunk;
     chunk.memory = (char*) malloc(1);
     chunk.size = 0;
-    make_arg(url, props);    
+    make_arg(url, props);
     curl_easy_reset(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -178,38 +182,38 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
     if (verbose)
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
-    /*if(!content.isNull())
-        payload = Json::FastWriter().write(content);*/
     switch(method)
     {
         case REQ_GET:
             break;
         case REQ_DELETE:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-            //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+            if (payload != NULL)
+              curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
             break;
         case REQ_PUT:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-            //curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, payload.c_str());
+            if (payload != NULL)
+              curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
             break;
         case REQ_POST:
 
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
-            /*curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, payload.c_str());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
             if (formpost) {
                 struct curl_slist *headerlist=NULL;
                 static const char buf[] = "Content-Type: multipart/form-data;";
                 headerlist = curl_slist_append(headerlist, buf);
-                curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headerlist);
-                curl_easy_setopt(m_curl, CURLOPT_HTTPPOST, formpost);
-            }*/
+                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+                curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+            }
             break;
     }
     CURLcode res = curl_easy_perform(curl);
     if(res != CURLE_OK)
     {
         free(chunk.memory);
-        current_response.m_err_code = ERR_CURL_RESP;        
+        current_response.m_err_code = ERR_CURL_RESP;
         current_response.m_err_msg = realloc(current_response.m_err_msg, strlen(curl_easy_strerror(res)));
         strcpy(current_response.m_err_msg, curl_easy_strerror(res));
         return ERR_CURL_RESP;
@@ -228,15 +232,15 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
             CURLcode res = curl_easy_perform(curl);
             if(res != CURLE_OK)
             {
-                free(chunk.memory);               
+                free(chunk.memory);
                 setCurrentResponse(ERR_CURL_RESP, curl_easy_strerror(res), strlen(curl_easy_strerror(res)));
                 return ERR_CURL_RESP;
             }
         }
     }
     if(chunk.size == 0)
-    {        
-        free(chunk.memory);       
+    {
+        free(chunk.memory);
         setCurrentResponse(ERR_CURL_EMPTY, szEmptyResponse, strlen(szEmptyResponse));
         return ERR_CURL_EMPTY;
     }
@@ -323,6 +327,64 @@ int get_route_query(const char *route_id, const char *query)
     return request(REQ_GET, curl, url, props, NULL);
 }
 
+int update_route(const char *route_id, const char *dest_id, char *data)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "route_destination_id", json_object_new_string(dest_id));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_PUT, curl, url, props, data);
+}
+
+int duplicate_route(const char *route_id, const char *to)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "to", json_object_new_string(to));
+    strcpy(url, DUPLICATE_ROUTE);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int delete_route(const char *route_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_DELETE, curl, url, props, NULL);
+}
+
+int merge_routes(const char *route_ids, const char *depot_address, struct MapPoint point, int remove_origin)
+{
+    //TODO: Implement
+    return -1;
+}
+
+int share_routes(const char *route_id, const char *email, const char *format)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "format", json_object_new_string(format));
+
+    struct curl_httppost *lastptr=NULL;
+
+    curl_formadd(&formpost,
+                   &lastptr,
+                   CURLFORM_COPYNAME, "recipient_email",
+                   CURLFORM_COPYCONTENTS, email,
+                   CURLFORM_END);
+
+    strcpy(url, SHARE_HOST);
+    return request(REQ_POST, curl, url, props, NULL);
+}
+
 /* VEHICLES */
 int get_vehicles(int offset, int limit)
 {
@@ -339,6 +401,4 @@ int get_vehicles(int offset, int limit)
     strcpy(url, VEHICLES_SERVICE);
     return request(REQ_GET, curl, url, props, NULL);
 }
-
-
 

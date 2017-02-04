@@ -20,3 +20,12 @@ TARGET_LINK_LIBRARIES(GetRouteDirections route4me)
 ADD_EXECUTABLE(GetRouteQuery GetRouteQuery.c)
 TARGET_LINK_LIBRARIES(GetRouteQuery route4me)
 
+ADD_EXECUTABLE(UpdateRoute UpdateRoute.c)
+TARGET_LINK_LIBRARIES(UpdateRoute route4me)
+
+ADD_EXECUTABLE(DuplicateRoute DuplicateRoute.c)
+TARGET_LINK_LIBRARIES(DuplicateRoute route4me)
+
+ADD_EXECUTABLE(ShareRoute ShareRoute.c)
+TARGET_LINK_LIBRARIES(ShareRoute route4me)
+
