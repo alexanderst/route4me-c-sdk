@@ -6,26 +6,18 @@
 
 int deserialize(const char* szFile, char** strJson)
 {
-    char* buffer = NULL;
     size_t len = 0;
-    int nRet = 0;
-
+    int ret = -1;
     FILE* fp = fopen(szFile, "r");
-    if (!fp)
-    {
-        nRet = -1;
-    }
-    else
-    {
-        while (nRet = getline(&buffer, &len, fp) != -1)
-        {
-            *strJson = realloc(*strJson, len);
-            if (**strJson == '\0')
-                strcpy(*strJson, buffer);
-            else
-                strcat(*strJson, buffer);
-        }
+    if (fp != NULL)
+    {        
+        fseek(fp, 0, SEEK_END);
+        len = ftell(fp);
+        rewind(fp);
+        *strJson = malloc(len);
+        fread(*strJson, sizeof(char), len, fp);
         fclose(fp);
+        ret = 0;
     }
-    return nRet;
+    return ret;
 }

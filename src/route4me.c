@@ -103,6 +103,7 @@ static const char R4_API_HOST[] = "https://www.route4me.com/api.v4/optimization_
 static const char ROUTE_HOST[] = "https://www.route4me.com/api.v4/route.php";
 static const char DUPLICATE_ROUTE[] = "https://www.route4me.com/actions/duplicate_route.php";
 static const char SHARE_HOST[] = "https://www.route4me.com/actions/route/share_route.php";
+static const char ADD_ROUTE_NOTES[] = "https://www.route4me.com/actions/addRouteNotes.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -383,6 +384,32 @@ int share_routes(const char *route_id, const char *email, const char *format)
 
     strcpy(url, SHARE_HOST);
     return request(REQ_POST, curl, url, props, NULL);
+}
+
+int get_address(const char *route_id, const char *destination_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "route_destination_id", json_object_new_string(destination_id));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int add_route_notes(const char *route_id, const char *destination_id, const char *notes, const char* device_type,
+                    const struct MapPoint* point, const char *data)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "address_id", json_object_new_string(destination_id));
+    json_object_object_add(props, "dev_lat", json_object_new_int(point->lat));
+    json_object_object_add(props, "dev_lng", json_object_new_int(point->lng));
+    json_object_object_add(props, "device_type", json_object_new_string(device_type));
+    strcpy(url, ADD_ROUTE_NOTES);
+    return request(REQ_POST, curl, url, props, data);
 }
 
 /* VEHICLES */

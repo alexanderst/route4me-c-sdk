@@ -29,3 +29,9 @@ TARGET_LINK_LIBRARIES(DuplicateRoute route4me)
 ADD_EXECUTABLE(ShareRoute ShareRoute.c)
 TARGET_LINK_LIBRARIES(ShareRoute route4me)
 
+ADD_EXECUTABLE(GetAddress GetAddress.c)
+TARGET_LINK_LIBRARIES(GetAddress route4me)
+
+ADD_EXECUTABLE(AddRouteNotes AddRouteNotes.c)
+TARGET_LINK_LIBRARIES(AddRouteNotes route4me)
+
