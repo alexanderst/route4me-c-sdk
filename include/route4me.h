@@ -21,6 +21,12 @@ struct MapPoint
     double lng;
 };
 
+struct Limit
+{
+    int offset;
+    int limit;
+};
+
 struct response_data getCurrentResponse();
 int getErrorCode();
 char* getErrorMessage();
@@ -56,7 +62,7 @@ int get_route(json_object* props);
 
 /** \brief Gets routes by path points
 * \param route id
-* \param route_path_output
+* \param route_path_outputtest/SetGps.c
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int get_route_path_points(const char* route_id, const char* route_path_output);
@@ -197,6 +203,33 @@ int remove_address_from_optimization(const char* address, const char* opt_id);
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int add_address_to_optimization(const char* body, const char* opt_id, int reoptimize);
+
+/** \brief Get all activities
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_all_activities(const struct Limit*);
+
+/** \brief Get all activities
+ * \param route id
+ * \param team
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_team_activities(const char* route_id, const char* team);
+
+/** \brief Log custom activity
+ * \param route id
+ * \param activity type
+ * \param message for log
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int log_custom_activity(const char *route_id, const char *activity_type,
+                        const char *activity_message);
+
+/** \brief Get activity type
+ * \param activity type
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_activity_by_type(const char* type);
 
 /*Vehicles functionality */
 int get_vehicles(int offset, int limit);

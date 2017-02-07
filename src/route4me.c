@@ -106,6 +106,7 @@ static const char SHARE_HOST[] = "https://www.route4me.com/actions/route/share_r
 static const char ADD_ROUTE_NOTES[] = "https://www.route4me.com/actions/addRouteNotes.php";
 static const char ADDRESS_HOST[] = "https://www.route4me.com/api.v4/address.php";
 static const char GPS_HOST[] = "https://www.route4me.com/track/set.php";
+static const char ACTIVITIES_HOST[] = "https://www.route4me.com/api/get_activities.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -443,6 +444,109 @@ int reoptimize(const char *opt_id)
     json_object_object_add(props, "reoptimize", json_object_new_int(1));
     strcpy(url, R4_API_HOST);
     return request(REQ_PUT, curl, url, props, NULL);
+}
+
+int get_optimization(const char *optimization_problem_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "optimization_problem_id", json_object_new_string(optimization_problem_id));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_optimizations(const char *states, int offset, int limit)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "states", json_object_new_string(states));
+    json_object_object_add(props, "offset", json_object_new_int(offset));
+    json_object_object_add(props, "limit", json_object_new_int(limit));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int remove_optimization(const char *fields)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_GET, curl, url, props, fields);
+}
+
+int add_address_to_optimization(const char *body, const char *opt_id, int reoptimize)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "optimization_problem_id", json_object_new_string(opt_id));
+    json_object_object_add(props, "reoptimize", json_object_new_int(reoptimize));
+
+    strcpy(url, R4_API_HOST);
+    return request(REQ_PUT, curl, url, props, body);
+}
+
+int remove_address_from_optimization(const char *address, const char *opt_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "optimization_problem_id", json_object_new_string(opt_id));
+    json_object_object_add(props, "route_destination_id", json_object_new_string(address));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_PUT, curl, url, props, NULL);
+}
+
+/* ACTIVITIES */
+int get_all_activities(const struct Limit* pLimit)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+    json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    strcpy(url, ACTIVITIES_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_team_activities(const char *route_id, const char *team)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "team", json_object_new_string(team));
+    strcpy(url, ACTIVITIES_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int log_custom_activity(const char *route_id, const char *activity_type, const char *activity_message)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+
+    json_object* body = json_object_new_object();
+    json_object_object_add(props, "activity_type", json_object_new_string(activity_type));
+    json_object_object_add(props, "activity_message", json_object_new_string(activity_message));
+
+    strcpy(url, ACTIVITIES_HOST);
+    return request(REQ_GET, curl, url, props, body);
+}
+
+int get_activity_by_type(const char *type)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "type", json_object_new_string(type));
+
+    strcpy(url, ACTIVITIES_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
 }
 
 /* VEHICLES */

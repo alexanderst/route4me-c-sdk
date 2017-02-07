@@ -44,4 +44,33 @@ TARGET_LINK_LIBRARIES(SetGps route4me)
 ADD_EXECUTABLE(Reoptimization Reoptimization.c)
 TARGET_LINK_LIBRARIES(Reoptimization route4me)
 
+ADD_EXECUTABLE(GetOptimization GetOptimization.c)
+TARGET_LINK_LIBRARIES(GetOptimization route4me)
+
+ADD_EXECUTABLE(GetOptimizations GetOptimizations.c)
+TARGET_LINK_LIBRARIES(GetOptimizations route4me)
+
+ADD_EXECUTABLE(RemoveOptimization RemoveOptimization.c)
+TARGET_LINK_LIBRARIES(RemoveOptimization route4me)
+
+ADD_EXECUTABLE(AddAddressToOptimization AddAddressToOptimization.c)
+TARGET_LINK_LIBRARIES(AddAddressToOptimization route4me)
+
+ADD_EXECUTABLE(GetAllActivities GetAllActivities.c)
+TARGET_LINK_LIBRARIES(GetAllActivities route4me)
+
+ADD_EXECUTABLE(LogActivity LogActivity.c)
+TARGET_LINK_LIBRARIES(LogActivity route4me)
+
+ADD_EXECUTABLE(GetTeamActivities GetTeamActivities.c)
+TARGET_LINK_LIBRARIES(GetTeamActivities route4me)
+
+ADD_EXECUTABLE(GetActivityByType GetActivityByType.c)
+TARGET_LINK_LIBRARIES(GetActivityByType route4me)
+
+
+
+
+
+
 
