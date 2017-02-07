@@ -104,6 +104,8 @@ static const char ROUTE_HOST[] = "https://www.route4me.com/api.v4/route.php";
 static const char DUPLICATE_ROUTE[] = "https://www.route4me.com/actions/duplicate_route.php";
 static const char SHARE_HOST[] = "https://www.route4me.com/actions/route/share_route.php";
 static const char ADD_ROUTE_NOTES[] = "https://www.route4me.com/actions/addRouteNotes.php";
+static const char ADDRESS_HOST[] = "https://www.route4me.com/api.v4/address.php";
+static const char GPS_HOST[] = "https://www.route4me.com/track/set.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -410,6 +412,37 @@ int add_route_notes(const char *route_id, const char *destination_id, const char
     json_object_object_add(props, "device_type", json_object_new_string(device_type));
     strcpy(url, ADD_ROUTE_NOTES);
     return request(REQ_POST, curl, url, props, data);
+}
+
+int get_route_notes(const char *route_id, const char *destination_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "route_destination_id", json_object_new_string(destination_id));
+    strcpy(url, ADDRESS_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int set_gps(json_object* props)
+{
+    char url[2048];
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, GPS_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+/* OPTIMIZATIONS */
+int reoptimize(const char *opt_id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "optimization_problem_id", json_object_new_string(opt_id));
+    json_object_object_add(props, "reoptimize", json_object_new_int(1));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_PUT, curl, url, props, NULL);
 }
 
 /* VEHICLES */

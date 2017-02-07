@@ -35,3 +35,13 @@ TARGET_LINK_LIBRARIES(GetAddress route4me)
 ADD_EXECUTABLE(AddRouteNotes AddRouteNotes.c)
 TARGET_LINK_LIBRARIES(AddRouteNotes route4me)
 
+ADD_EXECUTABLE(GetRouteNotes GetRouteNotes.c)
+TARGET_LINK_LIBRARIES(GetRouteNotes route4me)
+
+ADD_EXECUTABLE(SetGps SetGps.c)
+TARGET_LINK_LIBRARIES(SetGps route4me)
+
+ADD_EXECUTABLE(Reoptimization Reoptimization.c)
+TARGET_LINK_LIBRARIES(Reoptimization route4me)
+
+

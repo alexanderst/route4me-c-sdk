@@ -155,7 +155,7 @@ int get_route_notes(const char* route_id, const char* destination_id);
 * \param props api call parameters
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
-int set_gps(const char* props);
+int set_gps(json_object* props);
 
 /** \brief Reoptimize the problem.
 * \param opt_id optimization problem ID
