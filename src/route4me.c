@@ -4,12 +4,6 @@
 #include "../include/route4me.h"
 #include <string.h>
 
-enum ReqType {
-    REQ_GET,
-    REQ_POST,
-    REQ_PUT,
-    REQ_DELETE
-};
 
 enum
 {
@@ -107,6 +101,14 @@ static const char ADD_ROUTE_NOTES[] = "https://www.route4me.com/actions/addRoute
 static const char ADDRESS_HOST[] = "https://www.route4me.com/api.v4/address.php";
 static const char GPS_HOST[] = "https://www.route4me.com/track/set.php";
 static const char ACTIVITIES_HOST[] = "https://www.route4me.com/api/get_activities.php";
+static const char USERS_HOST[] = "https://www.route4me.com/api/member/view_users.php";
+static const char AUTHENTICATION_HOST[] = "https://www.route4me.com/actions/authenticate.php";
+static const char TRACKING_HOST[] = "https://route4me.com/api.v4/status.php";
+static const char LOCATION_HOST[] = "https://www.route4me.com/api/track/get_device_location.php";
+static const char GEOCODER[] = "https://www.route4me.com/api/geocoder.php";
+static const char STREETS_HOST[] = "https://rapid.route4me.com/street_data/";
+static const char AVOIDANCE_HOST[] = "https://www.route4me.com/api.v4/avoidance.php";
+static const char ORDER_HOST[] = "https://www.route4me.com/api.v4/order.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -177,6 +179,7 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
     chunk.memory = (char*) malloc(1);
     chunk.size = 0;
     make_arg(url, props);
+    printf("URL: %s\n", url);
     curl_easy_reset(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -214,6 +217,7 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
             break;
     }
     CURLcode res = curl_easy_perform(curl);
+    printf("Performed: %d\n", res);
     if(res != CURLE_OK)
     {
         free(chunk.memory);
@@ -549,6 +553,179 @@ int get_activity_by_type(const char *type)
     return request(REQ_GET, curl, url, props, NULL);
 }
 
+/* USERS */
+int get_all_users()
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, USERS_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int authenticate_user(const struct Member *pMember)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+
+    struct curl_httppost *lastptr=NULL;
+
+    curl_formadd(&formpost,
+                   &lastptr,
+                   CURLFORM_COPYNAME, "strEmail",
+                   CURLFORM_COPYCONTENTS, pMember->email,
+                   CURLFORM_END);
+    curl_formadd(&formpost,
+                   &lastptr,
+                   CURLFORM_COPYNAME, "strPassword",
+                   CURLFORM_COPYCONTENTS, pMember->password1,
+                   CURLFORM_END);
+    curl_formadd(&formpost,
+                   &lastptr,
+                   CURLFORM_COPYNAME, "format",
+                   CURLFORM_COPYCONTENTS, pMember->format,
+                   CURLFORM_END);
+    strcpy(url, AUTHENTICATION_HOST);
+    return request(REQ_POST, curl, url, props, NULL);
+}
+
+int modify_user(const char *data, enum ReqType req)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, USERS_HOST);
+    return request(req, curl, url, props, data);
+}
+
+/* TRACKING */
+int asset_tracking(const char *id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "tracking", json_object_new_string(id));
+    strcpy(url, TRACKING_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_device_location(const char *route_id, int start_date, int end_date, const char *period,
+                        int last_position, const char *format)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "route_id", json_object_new_string(route_id));
+    json_object_object_add(props, "format", json_object_new_string(format));
+    json_object_object_add(props, "last_position", json_object_new_int(last_position));
+    json_object_object_add(props, "time_period", json_object_new_string(period));
+    json_object_object_add(props, "start_date", json_object_new_int(start_date));
+    json_object_object_add(props, "end_date", json_object_new_int(end_date));
+    strcpy(url, LOCATION_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int batch_geocoding(const char *addresses, const char *format)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "addresses", json_object_new_string(addresses));
+    json_object_object_add(props, "format", json_object_new_string(format));
+    strcpy(url, GEOCODER);
+    return request(REQ_POST, curl, url, props, NULL);
+}
+
+int reverse_geocoding(const char *addresses, const char *format)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "addresses", json_object_new_string(addresses));
+    json_object_object_add(props, "format", json_object_new_string(format));
+    strcpy(url, GEOCODER);
+    return request(REQ_POST, curl, url, props, NULL);
+}
+
+/* STREETS */
+int get_street_address(int seqno)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, STREETS_HOST);
+    char szSeqno[10] = "";
+    sscanf(szSeqno, "%d", &seqno);
+    strcat(url, szSeqno);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_all_streets(const struct Limit *pLimit)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, STREETS_HOST);
+    if (pLimit != NULL)
+    {
+        char szLimit[10] = "";
+        sscanf(szLimit, "%d/%d/", &pLimit->limit, pLimit->offset);
+        strcat(url, szLimit);
+    }
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+/* AVOIDANCE ZONES */
+int add_avoidance_zone(const char *id, json_object *body)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+    strcpy(url, AVOIDANCE_HOST);
+    return request(REQ_POST, curl, url, props, body);
+}
+
+int get_avoidance_zone(const char *id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+    strcpy(url, AVOIDANCE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_avoidance_zones()
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, AVOIDANCE_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int update_avoidance_zone(const char *id, json_object *body)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+    strcpy(url, AVOIDANCE_HOST);
+    return request(REQ_PUT, curl, url, props, body);
+}
+
+int remove_avoidance_zone(const char *id)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+    strcpy(url, AVOIDANCE_HOST);
+    return request(REQ_DELETE, curl, url, props, NULL);
+}
+
 /* VEHICLES */
 int get_vehicles(int offset, int limit)
 {
@@ -566,3 +743,42 @@ int get_vehicles(int offset, int limit)
     return request(REQ_GET, curl, url, props, NULL);
 }
 
+/* ORDERS */
+int add_order(json_object *data)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_POST, curl, url, props, data);
+}
+
+int add_order_to_route(const char *id, json_object *data, int redirect)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "redirect", json_object_new_int(redirect));
+    json_object_object_add(props, "route_id", json_object_new_string(id));
+    strcpy(url, ROUTE_HOST);
+    return request(REQ_PUT, curl, url, props, data);
+}
+
+int get_order(const char *id)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "id", json_object_new_string(id));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_all_orders()
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}

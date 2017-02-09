@@ -27,6 +27,30 @@ struct Limit
     int limit;
 };
 
+struct Member
+{
+    char email[40];
+    char password1[50];
+    char password2[50];
+    char session_guid[100];
+    char format[10];
+    char plan[10];
+    char member_type[10];
+    char industry[10];
+    char first_name[20];
+    char last_name[20];
+    int check_terms;
+    char device_type[20];
+};
+
+enum ReqType {
+    REQ_GET,
+    REQ_POST,
+    REQ_PUT,
+    REQ_DELETE
+};
+
+
 struct response_data getCurrentResponse();
 int getErrorCode();
 char* getErrorMessage();
@@ -230,6 +254,167 @@ int log_custom_activity(const char *route_id, const char *activity_type,
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int get_activity_by_type(const char* type);
+
+/** \brief Get all users
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_all_users();
+
+/** \brief Authenticate users
+ * \param member data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int authenticate_user(const struct Member*);
+
+/** \brief Modify user
+ * \param member data
+ * \param type of http request
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int modify_user(const char* data, enum ReqType);
+
+/** \brief Asset Tracking
+ * \param id of asset
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int asset_tracking(const char* id);
+
+/** \brief Get device location
+ * \param route id
+ * \param start date
+ * \param end date
+ * \param period
+ * \param last position\
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_device_location(const char *route_id, int start_date, int end_date,
+                        const char *period, int last_position, const char *format);
+
+/** \brief Batch geocoding
+ * \param addresses
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int batch_geocoding(const char *addresses, const char *format);
+
+/** \brief Reverse geocoding
+ * \param addresses
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int reverse_geocoding(const char *addresses, const char *format);
+
+/** \brief Get street address
+ * \param seqno
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_street_address(int seqno);
+
+/** \brief Get all streets
+ * \param limit
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_all_streets(const struct Limit* pLimit);
+
+/** \brief Add avoidance zone
+ * \param id
+ * \param body
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int add_avoidance_zone(const char* id, json_object* body);
+
+/** \brief Get avoidance zone
+ * \param id
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_avoidance_zone(const char* id);
+
+/** \brief Get avoidance zones
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_avoidance_zones();
+
+/** \brief Update avoidance zone
+ * \param id
+ * \param body
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int update_avoidance_zone(const char* id, json_object* body);
+
+/** \brief Remove avoidance zone
+ * \param id
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int remove_avoidance_zone(const char* id);
+
+/** \brief Add order
+ * \param JSON data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int add_order(json_object*);
+
+/** \brief Add order to route
+ * \param id
+ * \param JSON data
+ * \param redirect
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int add_order_to_route(const char*, json_object*,int);
+
+/** \brief Get order
+ * \param id
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_order(const char*);
+
+/** \brief Get all orders
+ * \param id
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_all_orders();
+
+/** \brief Remove order
+ * \param id
+ * \param JSON data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int remove_order(const char* id, json_object* data);
+
+/** \brief Get all orders
+ * \param id
+ * \param JSON data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int update_order(const char* id, json_object* data);
+
+/** \brief Get all orders by date range
+ * \param date
+ * \param int redirect
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_orders_by_date(const char* date, int redirect);
+
+/** \brief Get orders by scheduled date
+ * \param date
+ * \param redirect
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_orders_by_scheduled(const char* date, int redirect);
+
+/** \brief Get orders by custom field
+ * \param field
+ * \param limit
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_custom_orders(const char *fields, const struct Limit* pLimit);
+
+/** \brief Get orders by query
+ * \param query
+ * \param limit
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_orders_query(const char *query, const struct Limit* pLimit);
 
 /*Vehicles functionality */
 int get_vehicles(int offset, int limit);

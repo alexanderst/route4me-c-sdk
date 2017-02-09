@@ -68,9 +68,35 @@ TARGET_LINK_LIBRARIES(GetTeamActivities route4me)
 ADD_EXECUTABLE(GetActivityByType GetActivityByType.c)
 TARGET_LINK_LIBRARIES(GetActivityByType route4me)
 
+ADD_EXECUTABLE(GetAllUsers GetAllUsers.c)
+TARGET_LINK_LIBRARIES(GetAllUsers route4me)
 
+ADD_EXECUTABLE(AuthenticateUser AuthenticateUser.c)
+TARGET_LINK_LIBRARIES(AuthenticateUser route4me)
 
+ADD_EXECUTABLE(AssetTracking AssetTracking.c)
+TARGET_LINK_LIBRARIES(AssetTracking route4me)
 
+ADD_EXECUTABLE(GetStreetAddress GetStreetAddress.c)
+TARGET_LINK_LIBRARIES(GetStreetAddress route4me)
 
+ADD_EXECUTABLE(GetAllStreets GetAllStreets.c)
+TARGET_LINK_LIBRARIES(GetAllStreets route4me)
 
+ADD_EXECUTABLE(BatchGeocoder BatchGeocoder.c)
+TARGET_LINK_LIBRARIES(BatchGeocoder route4me)
 
+ADD_EXECUTABLE(ReverseGeocoder ReverseGeocoder.c)
+TARGET_LINK_LIBRARIES(ReverseGeocoder route4me)
+
+ADD_EXECUTABLE(AddAvoidanceZone AddAvoidanceZone.c)
+TARGET_LINK_LIBRARIES(AddAvoidanceZone route4me)
+
+ADD_EXECUTABLE(GetAvoidanceZone GetAvoidanceZone.c)
+TARGET_LINK_LIBRARIES(GetAvoidanceZone route4me)
+
+ADD_EXECUTABLE(GetOrder GetOrder.c)
+TARGET_LINK_LIBRARIES(GetOrder route4me)
+
+ADD_EXECUTABLE(GetAllOrders GetAllOrders.c)
+TARGET_LINK_LIBRARIES(GetAllOrders route4me)
