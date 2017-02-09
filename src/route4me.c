@@ -782,3 +782,70 @@ int get_all_orders()
     strcpy(url, ORDER_HOST);
     return request(REQ_GET, curl, url, props, NULL);
 }
+
+int get_orders_by_date(const char *date, int redirect)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "redirect", json_object_new_int(redirect));
+    json_object_object_add(props, "day_added_YYMMDD", json_object_new_string(date));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_orders_by_scheduled(const char *date, int redirect)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "redirect", json_object_new_int(redirect));
+    json_object_object_add(props, "scheduled_for_YYMMDD", json_object_new_string(date));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_orders_query(const char *query, const struct Limit *pLimit)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "query", json_object_new_string(query));
+    json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+    json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_custom_orders(const char *fields, const struct Limit *pLimit)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "fields", json_object_new_string(fields));
+    json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+    json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int update_order(json_object *data, int redirect)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "redirect", json_object_new_int(redirect));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_PUT, curl, url, props, data);
+}
+
+int remove_order(json_object *data, int redirect)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "redirect", json_object_new_int(redirect));
+    strcpy(url, ORDER_HOST);
+    return request(REQ_DELETE, curl, url, props, data);
+}
+

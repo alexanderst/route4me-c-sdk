@@ -375,18 +375,18 @@ int get_order(const char*);
 int get_all_orders();
 
 /** \brief Remove order
- * \param id
  * \param JSON data
+ * \param redirect
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
-int remove_order(const char* id, json_object* data);
+int remove_order(json_object* data, int redirect);
 
 /** \brief Get all orders
- * \param id
  * \param JSON data
+ * \param redirect
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
-int update_order(const char* id, json_object* data);
+int update_order(json_object* data, int redirect);
 
 /** \brief Get all orders by date range
  * \param date
