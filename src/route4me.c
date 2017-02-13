@@ -4,41 +4,6 @@
 #include "../include/route4me.h"
 #include <string.h>
 
-
-enum
-{
-    ERR_HTTP = -1,
-    ERR_PARAM = -2,
-    ERR_SYNTAX = -3,
-    ERR_PARAM_TP = -4,
-    ERR_CURL = -5,
-    ERR_CURL_RESP = -6,
-    ERR_CURL_EMPTY = -7,
-    ERR_JSON = -8,
-    ERR_API = -9,
-
-    OPTIMIZATION_STATE_INITIAL = 1,
-    OPTIMIZATION_STATE_MATRIX_PROCESSING = 2,
-    OPTIMIZATION_STATE_OPTIMIZING = 3,
-    OPTIMIZATION_STATE_OPTIMIZED = 4,
-    OPTIMIZATION_STATE_ERROR = 5,
-    OPTIMIZATION_STATE_COMPUTING_DIRECTIONS = 6,
-
-    ROUTE4ME_METRIC_EUCLIDEAN = 1,
-    ROUTE4ME_METRIC_MANHATTAN = 2,
-    ROUTE4ME_METRIC_GEODESIC = 3,
-    ROUTE4ME_METRIC_MATRIX = 4,
-    ROUTE4ME_METRIC_EXACT_2D = 5,
-
-    TSP = 1,
-    VRP = 2,
-    CVRP_TW_SD = 3,
-    CVRP_TW_MD = 4,
-    TSP_TW = 5,
-    TSP_TW_CR = 6,
-    BBCVRP = 7
-};
-
 struct http_resp
 {
     char *memory;
@@ -105,10 +70,14 @@ static const char USERS_HOST[] = "https://www.route4me.com/api/member/view_users
 static const char AUTHENTICATION_HOST[] = "https://www.route4me.com/actions/authenticate.php";
 static const char TRACKING_HOST[] = "https://route4me.com/api.v4/status.php";
 static const char LOCATION_HOST[] = "https://www.route4me.com/api/track/get_device_location.php";
-static const char GEOCODER[] = "https://www.route4me.com/api/geocoder.php";
+static const char GEOCODER[] = "http://www.route4me.com/api/geocoder.php";
 static const char STREETS_HOST[] = "https://rapid.route4me.com/street_data/";
 static const char AVOIDANCE_HOST[] = "https://www.route4me.com/api.v4/avoidance.php";
 static const char ORDER_HOST[] = "https://www.route4me.com/api.v4/order.php";
+static const char CONFIG_SERVICE[] = "https://route4me.com/api.v4/configuration-settings.php";
+static const char PREVIEW_SERVICE[] = "https://www.route4me.com/actions/upload/csv-xls-preview.php";
+static const char UPLOAD_SERVICE[] = "https://www.route4me.com/actions/upload/upload.php";
+static const char UPLOAD_GEOCODING[] = "https://www.route4me.com/actions/upload/csv-xls-geocode.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -179,7 +148,6 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
     chunk.memory = (char*) malloc(1);
     chunk.size = 0;
     make_arg(url, props);
-    printf("URL: %s\n", url);
     curl_easy_reset(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -217,7 +185,6 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
             break;
     }
     CURLcode res = curl_easy_perform(curl);
-    printf("Performed: %d\n", res);
     if(res != CURLE_OK)
     {
         free(chunk.memory);
@@ -264,6 +231,15 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
         return ERR_JSON;
     }
     return CURLE_OK;
+}
+
+int str_empty(char* str)
+{
+    if ((strlen(str) == 0) || (*str == '\0' ))
+    {
+        return 1;
+    }
+    return 0;
 }
 
 /* ROUTES */
@@ -439,6 +415,20 @@ int set_gps(json_object* props)
 }
 
 /* OPTIMIZATIONS */
+int run_optimization(const char *addresses, const char *content)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+
+    json_object* body = json_object_new_object();
+    json_object_object_add(body, "addresses", json_object_new_string(addresses));
+    json_object_object_add(body, "parameters", json_object_new_string(content));
+
+    strcpy(url, R4_API_HOST);
+    return request(REQ_POST, curl, url, props, body);
+}
+
 int reoptimize(const char *opt_id)
 {
     char url[2048];
@@ -634,7 +624,7 @@ int batch_geocoding(const char *addresses, const char *format)
     json_object_object_add(props, "addresses", json_object_new_string(addresses));
     json_object_object_add(props, "format", json_object_new_string(format));
     strcpy(url, GEOCODER);
-    return request(REQ_POST, curl, url, props, NULL);
+    return request(REQ_POST, curl, url, props, json_object_new_object());
 }
 
 int reverse_geocoding(const char *addresses, const char *format)
@@ -645,7 +635,7 @@ int reverse_geocoding(const char *addresses, const char *format)
     json_object_object_add(props, "addresses", json_object_new_string(addresses));
     json_object_object_add(props, "format", json_object_new_string(format));
     strcpy(url, GEOCODER);
-    return request(REQ_POST, curl, url, props, NULL);
+    return request(REQ_POST, curl, url, props, json_object_new_object());
 }
 
 /* STREETS */
@@ -727,7 +717,7 @@ int remove_avoidance_zone(const char *id)
 }
 
 /* VEHICLES */
-int get_vehicles(int offset, int limit)
+int get_vehicles(const struct Limit* pLimit)
 {
     /*TODO: According to RFC-2616 length of URI is not limited.
             This number should be revised.
@@ -736,8 +726,11 @@ int get_vehicles(int offset, int limit)
     json_object* props = json_object_new_object();  
 
     json_object_object_add(props, "api_key", json_object_new_string(m_key));
-    json_object_object_add(props, "offset", json_object_new_int(offset));
-    json_object_object_add(props, "limit", json_object_new_int(limit));
+    if (pLimit)
+    {
+       json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+       json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    }
 
     strcpy(url, VEHICLES_SERVICE);
     return request(REQ_GET, curl, url, props, NULL);
@@ -849,3 +842,50 @@ int remove_order(json_object *data, int redirect)
     return request(REQ_DELETE, curl, url, props, data);
 }
 
+/* CONFIGURATION */
+int get_config(const char *key)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    if (!str_empty(key))
+    {
+        json_object_object_add(props, "config_key", json_object_new_string(key));
+    }
+    strcpy(url, CONFIG_SERVICE);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int modify_config(const char* value, enum ReqType method)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, CONFIG_SERVICE);
+    return request(method, curl, url, props, value);
+}
+
+/* FILES */
+int preview_file(const char *id, const char *format)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "strUploadID", json_object_new_string(id));
+    json_object_object_add(props, "format", json_object_new_string(format));
+    strcpy(url, PREVIEW_SERVICE);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int upload_file(const char *file_name, const char *format)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "format", json_object_new_string(format));
+
+    strcpy(url, UPLOAD_SERVICE);
+    json_object* body = json_object_new_object();
+    json_object_object_add(props, "strFilename", json_object_new_string(file_name));
+    return request(REQ_POST, curl, url, props, body);
+}

@@ -100,3 +100,20 @@ TARGET_LINK_LIBRARIES(GetOrder route4me)
 
 ADD_EXECUTABLE(GetAllOrders GetAllOrders.c)
 TARGET_LINK_LIBRARIES(GetAllOrders route4me)
+
+ADD_EXECUTABLE(OptimizeAndReoptimize OptimizeAndReoptimize.c)
+TARGET_LINK_LIBRARIES(OptimizeAndReoptimize route4me)
+
+ADD_EXECUTABLE(AddConfig AddConfig.c)
+TARGET_LINK_LIBRARIES(AddConfig route4me)
+
+ADD_EXECUTABLE(GetConfig GetConfig.c)
+TARGET_LINK_LIBRARIES(GetConfig route4me)
+
+ADD_EXECUTABLE(PreviewFile PreviewFile.c)
+TARGET_LINK_LIBRARIES(PreviewFile route4me)
+
+ADD_EXECUTABLE(UploadFile UploadFile.c)
+TARGET_LINK_LIBRARIES(UploadFile route4me)
+
+

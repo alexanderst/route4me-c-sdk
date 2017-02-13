@@ -50,6 +50,39 @@ enum ReqType {
     REQ_DELETE
 };
 
+enum
+{
+    ERR_HTTP = -1,
+    ERR_PARAM = -2,
+    ERR_SYNTAX = -3,
+    ERR_PARAM_TP = -4,
+    ERR_CURL = -5,
+    ERR_CURL_RESP = -6,
+    ERR_CURL_EMPTY = -7,
+    ERR_JSON = -8,
+    ERR_API = -9,
+
+    OPTIMIZATION_STATE_INITIAL = 1,
+    OPTIMIZATION_STATE_MATRIX_PROCESSING = 2,
+    OPTIMIZATION_STATE_OPTIMIZING = 3,
+    OPTIMIZATION_STATE_OPTIMIZED = 4,
+    OPTIMIZATION_STATE_ERROR = 5,
+    OPTIMIZATION_STATE_COMPUTING_DIRECTIONS = 6,
+
+    ROUTE4ME_METRIC_EUCLIDEAN = 1,
+    ROUTE4ME_METRIC_MANHATTAN = 2,
+    ROUTE4ME_METRIC_GEODESIC = 3,
+    ROUTE4ME_METRIC_MATRIX = 4,
+    ROUTE4ME_METRIC_EXACT_2D = 5,
+
+    TSP = 1,
+    VRP = 2,
+    CVRP_TW_SD = 3,
+    CVRP_TW_MD = 4,
+    TSP_TW = 5,
+    TSP_TW_CR = 6,
+    BBCVRP = 7
+};
 
 struct response_data getCurrentResponse();
 int getErrorCode();
@@ -186,6 +219,8 @@ int get_route_notes(const char* route_id, const char* destination_id);
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int set_gps(json_object* props);
+
+int run_optimization(const char* addresses, const char* content);
 
 /** \brief Reoptimize the problem.
 * \param opt_id optimization problem ID
@@ -343,6 +378,7 @@ int get_avoidance_zones();
 int update_avoidance_zone(const char* id, json_object* body);
 
 /** \brief Remove avoidance zone
+
  * \param id
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
@@ -416,10 +452,45 @@ int get_custom_orders(const char *fields, const struct Limit* pLimit);
 */
 int get_orders_query(const char *query, const struct Limit* pLimit);
 
-/*Vehicles functionality */
-int get_vehicles(int offset, int limit);
+/** \brief Get configuration
+ * \param key
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_config(const char *key);
 
-int deserialize(const char*, char**);
+/** \brief Modify configuration
+ * \param value
+ * \param method
+ * \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int modify_config(const char* value, enum ReqType method);
+
+/** \brief Get vehicles
+ * \param limit
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_vehicles(const struct Limit* pLimit);
+
+/** \brief Preview file
+ * \param id
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int preview_file(const char* id, const char* format);
+
+/** \brief Upload file
+ * \param file_name
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int upload_file(const char* file_name, const char* format);
+
+/** \brief Deserialize JSON file to string
+ * \param input - file
+ * \param output - data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int deserialize(const char* file, char** data);
 
 #endif
 
