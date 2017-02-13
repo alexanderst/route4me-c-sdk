@@ -485,6 +485,14 @@ int preview_file(const char* id, const char* format);
 */
 int upload_file(const char* file_name, const char* format);
 
+/** \brief Validate session
+ * \param session id
+ * \param member id
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int validate_session(const char *session_id, const char *member_id, const char *format);
+
 /** \brief Deserialize JSON file to string
  * \param input - file
  * \param output - data

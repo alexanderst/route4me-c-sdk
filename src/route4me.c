@@ -70,7 +70,7 @@ static const char USERS_HOST[] = "https://www.route4me.com/api/member/view_users
 static const char AUTHENTICATION_HOST[] = "https://www.route4me.com/actions/authenticate.php";
 static const char TRACKING_HOST[] = "https://route4me.com/api.v4/status.php";
 static const char LOCATION_HOST[] = "https://www.route4me.com/api/track/get_device_location.php";
-static const char GEOCODER[] = "http://www.route4me.com/api/geocoder.php";
+static const char GEOCODER[] = "https://www.route4me.com/api/geocoder.php";
 static const char STREETS_HOST[] = "https://rapid.route4me.com/street_data/";
 static const char AVOIDANCE_HOST[] = "https://www.route4me.com/api.v4/avoidance.php";
 static const char ORDER_HOST[] = "https://www.route4me.com/api.v4/order.php";
@@ -78,6 +78,7 @@ static const char CONFIG_SERVICE[] = "https://route4me.com/api.v4/configuration-
 static const char PREVIEW_SERVICE[] = "https://www.route4me.com/actions/upload/csv-xls-preview.php";
 static const char UPLOAD_SERVICE[] = "https://www.route4me.com/actions/upload/upload.php";
 static const char UPLOAD_GEOCODING[] = "https://www.route4me.com/actions/upload/csv-xls-geocode.php";
+static const char VALIDATE_SESSION[] = "https://www.route4me.com/datafeed/session/validate_session.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -587,6 +588,18 @@ int modify_user(const char *data, enum ReqType req)
     json_object_object_add(props, "api_key", json_object_new_string(m_key));
     strcpy(url, USERS_HOST);
     return request(req, curl, url, props, data);
+}
+
+int validate_session(const char *session_id, const char *member_id, const char *format)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "session_guid", json_object_new_string(session_id));
+    json_object_object_add(props, "member_id", json_object_new_string(member_id));
+    json_object_object_add(props, "format", json_object_new_string(format));
+    strcpy(url, VALIDATE_SESSION);
+    return request(REQ_GET, curl, url, props, NULL);
 }
 
 /* TRACKING */
