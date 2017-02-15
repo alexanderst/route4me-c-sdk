@@ -170,12 +170,16 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
         case REQ_PUT:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
             if (payload != NULL)
+            {
               curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+            }
             break;
         case REQ_POST:
-
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+            if (payload != NULL)
+            {
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+            }
             if (formpost) {
                 struct curl_slist *headerlist=NULL;
                 static const char buf[] = "Content-Type: multipart/form-data;";
@@ -232,15 +236,6 @@ static int request(enum ReqType method, void *curl, char *url, json_object *prop
         return ERR_JSON;
     }
     return CURLE_OK;
-}
-
-int str_empty(char* str)
-{
-    if ((strlen(str) == 0) || (*str == '\0' ))
-    {
-        return 1;
-    }
-    return 0;
 }
 
 /* ROUTES */
@@ -412,22 +407,31 @@ int set_gps(json_object* props)
     char url[2048];
     json_object_object_add(props, "api_key", json_object_new_string(m_key));
     strcpy(url, GPS_HOST);
-    return request(REQ_GET, curl, url, props, NULL);
+    return request(REQ_POST, curl, url, props, NULL);
 }
 
 /* OPTIMIZATIONS */
-int run_optimization(const char *addresses, const char *content)
+int add_optimization(const char* body)
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, R4_API_HOST);
+    return request(REQ_POST, curl, url, props, body);
+}
+
+int run_optimization(const json_object* addresses, const json_object* parameters)
 {
     char url[2048];
     json_object* props = json_object_new_object();
     json_object_object_add(props, "api_key", json_object_new_string(m_key));
 
     json_object* body = json_object_new_object();
-    json_object_object_add(body, "addresses", json_object_new_string(addresses));
-    json_object_object_add(body, "parameters", json_object_new_string(content));
+    json_object_object_add(body, "addresses", addresses);
+    json_object_object_add(body, "parameters", parameters);
 
     strcpy(url, R4_API_HOST);
-    return request(REQ_POST, curl, url, props, body);
+    return request(REQ_POST, curl, url, props, json_object_to_json_string(body));
 }
 
 int reoptimize(const char *opt_id)
@@ -599,6 +603,15 @@ int validate_session(const char *session_id, const char *member_id, const char *
     json_object_object_add(props, "member_id", json_object_new_string(member_id));
     json_object_object_add(props, "format", json_object_new_string(format));
     strcpy(url, VALIDATE_SESSION);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_subusers()
+{
+    char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, USERS_HOST);
     return request(REQ_GET, curl, url, props, NULL);
 }
 

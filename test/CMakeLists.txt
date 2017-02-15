@@ -29,6 +29,9 @@ TARGET_LINK_LIBRARIES(DuplicateRoute route4me)
 ADD_EXECUTABLE(ShareRoute ShareRoute.c)
 TARGET_LINK_LIBRARIES(ShareRoute route4me)
 
+ADD_EXECUTABLE(DeleteRoute DeleteRoute.c)
+TARGET_LINK_LIBRARIES(DeleteRoute route4me)
+
 ADD_EXECUTABLE(GetAddress GetAddress.c)
 TARGET_LINK_LIBRARIES(GetAddress route4me)
 
@@ -40,6 +43,9 @@ TARGET_LINK_LIBRARIES(GetRouteNotes route4me)
 
 ADD_EXECUTABLE(SetGps SetGps.c)
 TARGET_LINK_LIBRARIES(SetGps route4me)
+
+ADD_EXECUTABLE(AddOptimization AddOptimization.c)
+TARGET_LINK_LIBRARIES(AddOptimization route4me)
 
 ADD_EXECUTABLE(Reoptimization Reoptimization.c)
 TARGET_LINK_LIBRARIES(Reoptimization route4me)
@@ -116,4 +122,8 @@ TARGET_LINK_LIBRARIES(PreviewFile route4me)
 ADD_EXECUTABLE(UploadFile UploadFile.c)
 TARGET_LINK_LIBRARIES(UploadFile route4me)
 
+ADD_EXECUTABLE(ValidateSession ValidateSession.c)
+TARGET_LINK_LIBRARIES(ValidateSession route4me)
 
+ADD_EXECUTABLE(SingleDriverRoundTrip SingleDriverRoundTrip.c)
+TARGET_LINK_LIBRARIES(SingleDriverRoundTrip route4me)

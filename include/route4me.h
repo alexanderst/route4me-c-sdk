@@ -220,7 +220,11 @@ int get_route_notes(const char* route_id, const char* destination_id);
 */
 int set_gps(json_object* props);
 
-int run_optimization(const char* addresses, const char* content);
+/** \brief Create new optimization
+* \param optimization data
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int add_optimization(const char* body);
 
 /** \brief Reoptimize the problem.
 * \param opt_id optimization problem ID
@@ -307,6 +311,19 @@ int authenticate_user(const struct Member*);
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int modify_user(const char* data, enum ReqType);
+
+/** \brief Validate session
+ * \param session id
+ * \param member id
+ * \param format
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int validate_session(const char *session_id, const char *member_id, const char *format);
+
+/** \brief Get subusers
+* \return \c 0 if the response was successfully received, \c error code if an error occurred.
+*/
+int get_subusers();
 
 /** \brief Asset Tracking
  * \param id of asset
@@ -484,14 +501,6 @@ int preview_file(const char* id, const char* format);
 * \return \c 0 if the response was successfully received, \c error code if an error occurred.
 */
 int upload_file(const char* file_name, const char* format);
-
-/** \brief Validate session
- * \param session id
- * \param member id
- * \param format
-* \return \c 0 if the response was successfully received, \c error code if an error occurred.
-*/
-int validate_session(const char *session_id, const char *member_id, const char *format);
 
 /** \brief Deserialize JSON file to string
  * \param input - file
