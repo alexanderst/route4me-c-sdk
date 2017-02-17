@@ -131,6 +131,9 @@ TARGET_LINK_LIBRARIES(SingleDriverRoundTrip route4me)
 ADD_EXECUTABLE(MultipleDepotMultipleDriverTimeWindow MultipleDepotMultipleDriverTimeWindow.c)
 TARGET_LINK_LIBRARIES(MultipleDepotMultipleDriverTimeWindow route4me)
 
+ADD_EXECUTABLE(SingleDepotMultipleDriver SingleDepotMultipleDriver.c)
+TARGET_LINK_LIBRARIES(SingleDepotMultipleDriver route4me)
+
 ADD_EXECUTABLE(AddTerritory AddTerritory.c)
 TARGET_LINK_LIBRARIES(AddTerritory route4me)
 
@@ -145,3 +148,4 @@ TARGET_LINK_LIBRARIES(GetContacts route4me)
 
 ADD_EXECUTABLE(RemoveAddressFromOptimization RemoveAddressFromOptimization.c)
 TARGET_LINK_LIBRARIES(RemoveAddressFromOptimization route4me)
+
