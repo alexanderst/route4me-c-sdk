@@ -127,3 +127,18 @@ TARGET_LINK_LIBRARIES(ValidateSession route4me)
 
 ADD_EXECUTABLE(SingleDriverRoundTrip SingleDriverRoundTrip.c)
 TARGET_LINK_LIBRARIES(SingleDriverRoundTrip route4me)
+
+ADD_EXECUTABLE(MultipleDepotMultipleDriverTimeWindow MultipleDepotMultipleDriverTimeWindow.c)
+TARGET_LINK_LIBRARIES(MultipleDepotMultipleDriverTimeWindow route4me)
+
+ADD_EXECUTABLE(AddTerritory AddTerritory.c)
+TARGET_LINK_LIBRARIES(AddTerritory route4me)
+
+ADD_EXECUTABLE(GetTerritory GetTerritory.c)
+TARGET_LINK_LIBRARIES(GetTerritory route4me)
+
+ADD_EXECUTABLE(RemoveTerritory RemoveTerritory.c)
+TARGET_LINK_LIBRARIES(RemoveTerritory route4me)
+
+ADD_EXECUTABLE(GetContacts GetContacts.c)
+TARGET_LINK_LIBRARIES(GetContacts route4me)
