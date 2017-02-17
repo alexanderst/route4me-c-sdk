@@ -142,3 +142,6 @@ TARGET_LINK_LIBRARIES(RemoveTerritory route4me)
 
 ADD_EXECUTABLE(GetContacts GetContacts.c)
 TARGET_LINK_LIBRARIES(GetContacts route4me)
+
+ADD_EXECUTABLE(RemoveAddressFromOptimization RemoveAddressFromOptimization.c)
+TARGET_LINK_LIBRARIES(RemoveAddressFromOptimization route4me)

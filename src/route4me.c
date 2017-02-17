@@ -79,6 +79,8 @@ static const char PREVIEW_SERVICE[] = "https://www.route4me.com/actions/upload/c
 static const char UPLOAD_SERVICE[] = "https://www.route4me.com/actions/upload/upload.php";
 static const char UPLOAD_GEOCODING[] = "https://www.route4me.com/actions/upload/csv-xls-geocode.php";
 static const char VALIDATE_SESSION[] = "https://www.route4me.com/datafeed/session/validate_session.php";
+static const char TERRITORY_HOST[] = "https://route4me.com/api.v4/territory.php";
+static const char ADDRESS_BOOK_HOST[] = "https://www.route4me.com/api.v4/address_book.php";
 
 // TODO: Revise api key length
 static char m_key[100];
@@ -495,8 +497,8 @@ int remove_address_from_optimization(const char *address, const char *opt_id)
     json_object_object_add(props, "api_key", json_object_new_string(m_key));
     json_object_object_add(props, "optimization_problem_id", json_object_new_string(opt_id));
     json_object_object_add(props, "route_destination_id", json_object_new_string(address));
-    strcpy(url, R4_API_HOST);
-    return request(REQ_PUT, curl, url, props, NULL);
+    strcpy(url, ADDRESS_HOST);
+    return request(REQ_DELETE, curl, url, props, NULL);
 }
 
 /* ACTIVITIES */
@@ -914,4 +916,109 @@ int upload_file(const char *file_name, const char *format)
     json_object* body = json_object_new_object();
     json_object_object_add(props, "strFilename", json_object_new_string(file_name));
     return request(REQ_POST, curl, url, props, body);
+}
+
+/* Territories */
+int add_territory(const char *json_body)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, TERRITORY_HOST);
+    return request(REQ_POST, curl, url, props, json_body);
+}
+
+int get_territory(const char *id)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+
+    strcpy(url, TERRITORY_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_all_territories()
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+
+    strcpy(url, TERRITORY_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int remove_territory(const char *id)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "territory_id", json_object_new_string(id));
+
+    strcpy(url, TERRITORY_HOST);
+    return request(REQ_DELETE, curl, url, props, NULL);
+}
+
+/* ADDRESS BOOK */
+int add_address_book_contact(const char *json_body)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_POST, curl, url, props, json_body);
+}
+
+int get_address_book_by_text(const char *text, const struct Limit* pLimit)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+    json_object_object_add(props, "query", json_object_new_string(text));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_address_book_contacts(const char *id)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "address_id", json_object_new_string(id));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int get_all_address_book_contacts(const struct Limit *pLimit)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "limit", json_object_new_int(pLimit->limit));
+    json_object_object_add(props, "offset", json_object_new_int(pLimit->offset));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_GET, curl, url, props, NULL);
+}
+
+int update_address_book_contact(const char *id, const char *json_body)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "address_id", json_object_new_string(id));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_PUT, curl, url, props, json_body);
+}
+
+int remove_address_book_contact(const char *id)
+{
+    static char url[2048];
+    json_object* props = json_object_new_object();
+    json_object_object_add(props, "api_key", json_object_new_string(m_key));
+    json_object_object_add(props, "address_id", json_object_new_string(id));
+    strcpy(url, ADDRESS_BOOK_HOST);
+    return request(REQ_DELETE, curl, url, props, NULL);
 }
